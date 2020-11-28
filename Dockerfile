@@ -12,7 +12,7 @@ FROM alpine:latest as build
 
 # Set metadata
 LABEL maintainer="Thomas Bendler <code@thbe.org>"
-LABEL version="1.0"
+LABEL version="1.1"
 LABEL description="Creates an Alpine container serving an SRT Live Server (SLS) instance"
 
 # Set environment

@@ -50,6 +50,16 @@ You can use the standard Docker commands to examine the status of the sls instan
 docker logs --tail 1000 --follow --timestamps sls
 ```
 
+### Use server
+
+Example Sending of SRT in OBS:
+* In the setup menu under "Stream", select "Custom..."  leave the Key field blank.
+* Put the following url to send to your docker container: `srt://your.server.ip:10000?streamid=publish/stream/yourstreamname`
+
+Example of Receiving of SRT in OBS:
+* Add a Media Source
+* Put the following url to receive: `srt://your.server.ip:10000?streamid=stream/live/yourstreamname`
+
 ## Next steps
 
 The next release of this Docker image should have a persistent sls configuration.
