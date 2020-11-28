@@ -44,7 +44,7 @@ RUN make
 FROM alpine:latest
 
 # Set library path
-ENV LD_LIBRARY_PATH /lib:/usr/lib:/usr/local/lib64
+ENV LD_LIBRARY_PATH /lib:/usr/lib:/srv/sls/lib64
 
 # Install and setup runtime environment
 RUN apk update --no-cache &&\
@@ -69,4 +69,4 @@ EXPOSE 10000/udp
 WORKDIR /srv/sls/tmp
 
 # Start srt-live-server instance
-ENTRYPOINT [ "/srv/sls/bin/sls", "-c", "/srv/sls/etc/sls.conf"]
+CMD ["/srv/run.sh"]
