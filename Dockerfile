@@ -24,7 +24,7 @@ RUN apk update --no-cache &&\
     apk add --no-cache linux-headers alpine-sdk cmake tcl openssl-dev zlib-dev &&\
     apk upgrade --no-cache
 
-# Set workdir and clone GIT repositories for srt and srt-live-server
+# Set workdir and clone GIT repositories for srt and srt live server
 WORKDIR /srv/build
 RUN git clone https://github.com/Haivision/srt.git &&\
     git clone https://github.com/Edward-Wu/srt-live-server.git
@@ -36,7 +36,7 @@ COPY build/Makefile /srv/build/srt-live-server/Makefile
 WORKDIR /srv/build/srt
 RUN ./configure --prefix=/srv/sls && make && make install
 
-# Set workdir and build srt-live-server
+# Set workdir and build srt live server
 WORKDIR /srv/build/srt-live-server
 RUN make
 
@@ -59,6 +59,9 @@ COPY --from=build /srv/build/srt-live-server/bin /srv/sls/bin/
 # Copy configuration files
 COPY root /
 
+# Prepare SLS start
+RUN chmod 755 /srv/run.sh
+
 # Create volume for log files
 VOLUME /srv/sls/logs
 
@@ -68,5 +71,5 @@ EXPOSE 10000/udp
 # Set workdir to srt user home directory
 WORKDIR /srv/sls/tmp
 
-# Start srt-live-server instance
+# Start SLS instance
 CMD ["/srv/run.sh"]
