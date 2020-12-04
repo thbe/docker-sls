@@ -5,7 +5,7 @@ FROM alpine:latest as build
 #   docker build --rm --no-cache -t thbe/sls .
 #
 # USAGE:
-#   docker run --detach --restart always --name sls --hostname sls.$(hostname -d) -p 10000:10000/udp thbe/sls
+#   docker run --detach --restart always --name sls --hostname sls.$(hostname -d) -p 9710:9710/udp thbe/sls
 #   docker logs --tail 1000 --follow --timestamps sls
 #   docker exec -ti sls /bin/sh
 #
@@ -66,7 +66,7 @@ RUN chmod 755 /srv/run.sh
 VOLUME /srv/sls/logs
 
 # Expose streaming port
-EXPOSE 10000/udp
+EXPOSE 9710/udp
 
 # Set workdir to srt user home directory
 WORKDIR /srv/sls/tmp

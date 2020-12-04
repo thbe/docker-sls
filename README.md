@@ -2,8 +2,7 @@
 
 [![Build Status](https://img.shields.io/docker/automated/thbe/sls.svg)](https://hub.docker.com/r/thbe/sls/builds/) [![GitHub Stars](https://img.shields.io/github/stars/thbe/docker-sls.svg)](https://github.com/thbe/docker-sls/stargazers) [![Docker Stars](https://img.shields.io/docker/stars/thbe/sls.svg)](https://hub.docker.com/r/thbe/sls) [![Docker Pulls](https://img.shields.io/docker/pulls/thbe/sls.svg)](https://hub.docker.com/r/thbe/sls)
 
-This is a Docker image to run a SRT Live Server (SLS) instance.
-This Docker image is based on the official [Alpine](https://hub.docker.com/r/_/alpine/) image.
+This Docker image could be used to run an SRT Live Server (SLS) instance. The Docker image is based on the official [Alpine Linux](https://hub.docker.com/r/_/alpine/).
 
 #### Table of Contents
 
@@ -11,7 +10,6 @@ This Docker image is based on the official [Alpine](https://hub.docker.com/r/_/a
 - [Download](https://github.com/thbe/docker-sls#download)
 - [How to use this image](https://github.com/thbe/docker-sls#how-to-use-this-image)
 - [Next steps](https://github.com/thbe/docker-sls#next-steps)
-- [Important notes](https://github.com/thbe/docker-sls#important-notes)
 - [Update Docker image](https://github.com/thbe/docker-sls#update-docker-image)
 - [Advanced usage](https://github.com/thbe/docker-sls#advanced-usage)
 - [Technical details](https://github.com/thbe/docker-sls#technical-details)
@@ -39,7 +37,7 @@ Alternatively, you may build the Docker image from the
 The instance can be started as follow:
 
 ```
-docker run --detach --restart always --name sls --hostname sls.$(hostname -d) -p 10000:10000/udp thbe/sls
+docker run --detach --restart always --name sls --hostname sls.$(hostname -d) -p 9710:9710/udp thbe/sls
 ```
 
 ### Check server status
@@ -54,21 +52,19 @@ docker logs --tail 1000 --follow --timestamps sls
 
 Example Sending of SRT in OBS:
 * In the setup menu under "Stream", select "Custom..."  leave the Key field blank.
-* Put the following url to send to your docker container: `srt://your.server.ip:10000?streamid=publish/stream/yourstreamname`
+* Put the following url to send to your docker container: `srt://your.server.ip:9710?streamid=publish/stream/yourstreamname`
 
 Example of Receiving of SRT in OBS:
 * Add a Media Source
-* Put the following url to receive: `srt://your.server.ip:10000?streamid=stream/live/yourstreamname`
+* Put the following url to receive: `srt://your.server.ip:9710?streamid=stream/live/yourstreamname`
+
+### Example usage
+
+You can find the blog article [virtual come together](https://thbe.org/posts/2020/11/29/Virtual_come_together.html) on my website that shows a real life usage example of SLS.
 
 ## Next steps
 
-The next release of this Docker image should have a persistent sls configuration.
-
-## Important notes
-
-The username for the web server is `root`/`password` unless you don't change the password with the environment
-variable as described in the [Environment variables](https://github.com/thbe/docker-sls#how-to-use-this-image)
-section.
+The next release of this Docker image should have a persistent sls configuration outside of the docker image.
 
 ## Update Docker image
 
