@@ -3,7 +3,7 @@ MAIN_NAME=sls
 CLIENT_NAME=slc
 INC_FLAGS = -I/srv/sls/include
 INC_PATH = -I./ -I../ -I./slscore -I./include -I/srv/sls/include
-LIB_PATH =  -L ./lib -L /srv/sls/lib64
+LIB_PATH =  -L ./lib -L /srv/sls/lib
 LIBRARY_FILE = -lpthread -lz -lsrt
 BIN_PATH = ./bin
 

@@ -34,9 +34,13 @@ RUN git clone --depth 1 https://github.com/Haivision/srt.git && \
 # Copy Makefile first (changes less frequently)
 COPY build/Makefile /srv/build/srt-live-server/Makefile
 
-# Build SRT library
+# Fix missing ctime include for GCC 13+ compatibility
+RUN sed -i '/#include "common.hpp"/a #include <ctime>' /srv/build/srt-live-server/slscore/common.cpp
+
+# Build SRT library using CMake
 WORKDIR /srv/build/srt
-RUN ./configure --prefix=/srv/sls && \
+RUN mkdir build && cd build && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=/srv/sls && \
     make -j"$(nproc)" && \
     make install
 
@@ -62,7 +66,7 @@ LABEL org.opencontainers.image.source="https://github.com/thbe/docker-sls"
 # Set environment variables
 ENV LANG=C.UTF-8 \
     TERM=xterm \
-    LD_LIBRARY_PATH=/lib:/usr/lib:/srv/sls/lib64
+    LD_LIBRARY_PATH=/lib:/usr/lib:/srv/sls/lib
 
 # Create non-root user for security
 RUN addgroup -g 1000 sls && \
