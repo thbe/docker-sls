@@ -1,4 +1,4 @@
-FROM alpine:latest as build
+# syntax=docker/dockerfile:1
 #
 # BUILD:
 #   wget https://raw.githubusercontent.com/thbe/docker-sls/master/Dockerfile
@@ -10,56 +10,79 @@ FROM alpine:latest as build
 #   docker exec -ti sls /bin/sh
 #
 
-# Set metadata
-LABEL maintainer="Thomas Bendler <code@thbe.org>"
-LABEL version="1.1"
-LABEL description="Creates an Alpine container serving an SRT Live Server (SLS) instance"
+# Pin Alpine version for reproducible builds
+ARG ALPINE_VERSION=3.19
 
-# Set environment
-ENV LANG en_US.UTF-8
-ENV TERM xterm
+#############################################
+# Build stage
+#############################################
+FROM alpine:${ALPINE_VERSION} AS build
 
-# Install build tools
-RUN apk update --no-cache &&\
-    apk add --no-cache linux-headers alpine-sdk cmake tcl openssl-dev zlib-dev &&\
-    apk upgrade --no-cache
+# Install build tools (combined into single layer)
+RUN apk add --no-cache \
+        alpine-sdk \
+        cmake \
+        linux-headers \
+        openssl-dev \
+        zlib-dev
 
-# Set workdir and clone GIT repositories for srt and srt live server
+# Set workdir and clone GIT repositories
 WORKDIR /srv/build
-RUN git clone https://github.com/Haivision/srt.git &&\
-    git clone https://github.com/Edward-Wu/srt-live-server.git
+RUN git clone --depth 1 https://github.com/Haivision/srt.git && \
+    git clone --depth 1 https://github.com/Edward-Wu/srt-live-server.git
 
-# Replace Makefile
+# Copy Makefile first (changes less frequently)
 COPY build/Makefile /srv/build/srt-live-server/Makefile
 
-# Set workdir and build srt
+# Build SRT library
 WORKDIR /srv/build/srt
-RUN ./configure --prefix=/srv/sls && make && make install
+RUN ./configure --prefix=/srv/sls && \
+    make -j"$(nproc)" && \
+    make install
 
-# Set workdir and build srt live server
+# Build SRT Live Server
 WORKDIR /srv/build/srt-live-server
-RUN make
+RUN make -j"$(nproc)"
 
-# Create final Docker image from build image
-FROM alpine:latest
+# Strip debug symbols to reduce binary size
+RUN strip /srv/sls/bin/* /srv/build/srt-live-server/bin/* 2>/dev/null || true
 
-# Set library path
-ENV LD_LIBRARY_PATH /lib:/usr/lib:/srv/sls/lib64
+#############################################
+# Runtime stage
+#############################################
+FROM alpine:${ALPINE_VERSION}
 
-# Install and setup runtime environment
-RUN apk update --no-cache &&\
-    apk add --no-cache openssl libstdc++ &&\
-    apk upgrade --no-cache &&\
-    mkdir -p /srv/sls/logs
+# Set metadata using OCI standard labels
+LABEL org.opencontainers.image.title="SRT Live Server"
+LABEL org.opencontainers.image.description="Alpine container serving an SRT Live Server (SLS) instance"
+LABEL org.opencontainers.image.authors="Thomas Bendler <code@thbe.org>"
+LABEL org.opencontainers.image.version="1.2"
+LABEL org.opencontainers.image.source="https://github.com/thbe/docker-sls"
 
-# Install srt and sls application
-COPY --from=build /srv/sls /srv/sls/
-COPY --from=build /srv/build/srt-live-server/bin /srv/sls/bin/
+# Set environment variables
+ENV LANG=C.UTF-8 \
+    TERM=xterm \
+    LD_LIBRARY_PATH=/lib:/usr/lib:/srv/sls/lib64
+
+# Create non-root user for security
+RUN addgroup -g 1000 sls && \
+    adduser -D -u 1000 -G sls -h /srv/sls -s /sbin/nologin sls
+
+# Install runtime dependencies and create directories in single layer
+RUN apk add --no-cache \
+        libstdc++ \
+        openssl && \
+    mkdir -p /srv/sls/logs /srv/sls/tmp && \
+    chown -R sls:sls /srv/sls
+
+# Copy built artifacts from build stage
+COPY --from=build --chown=sls:sls /srv/sls /srv/sls/
+COPY --from=build --chown=sls:sls /srv/build/srt-live-server/bin /srv/sls/bin/
 
 # Copy configuration files
-COPY root /
+COPY --chown=sls:sls root /
 
-# Prepare SLS start
+# Set executable permission
 RUN chmod 755 /srv/run.sh
 
 # Create volume for log files
@@ -68,7 +91,14 @@ VOLUME /srv/sls/logs
 # Expose streaming port
 EXPOSE 9710/udp
 
-# Set workdir to srt user home directory
+# Health check to verify server is responding
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pgrep -x sls > /dev/null || exit 1
+
+# Switch to non-root user
+USER sls
+
+# Set workdir
 WORKDIR /srv/sls/tmp
 
 # Start SLS instance
